@@ -1,0 +1,55 @@
+Answer:
+we use command and get the following result
+[czg964@freeze lab2]$ nvcc -gencode=arch=compute_30,code=\"sm_30,compute_30\" --ptxas-options=-v matrixmul_kernel.cu
+ptxas info    : 0 bytes gmem
+ptxas info    : Compiling entry function '_Z15MatrixMulKernel6MatrixS_S_' for 'sm_30'
+ptxas info    : Function properties for _Z15MatrixMulKernel6MatrixS_S_
+    0 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 25 registers, 8448 bytes smem, 392 bytes cmem[0]
+
+after running deviceQuery we get:
+
+CUDA Device Query (Runtime API) version (CUDART static linking)
+
+Detected 1 CUDA Capable device(s)
+
+Device 0: "GeForce GTX 680"
+  CUDA Driver Version / Runtime Version          7.5 / 5.0
+  CUDA Capability Major/Minor version number:    3.0
+  Total amount of global memory:                 2047 MBytes (2146762752 bytes)
+  ( 8) Multiprocessors x (192) CUDA Cores/MP:    1536 CUDA Cores
+  GPU Clock rate:                                1058 MHz (1.06 GHz)
+  Memory Clock rate:                             3004 Mhz
+  Memory Bus Width:                              256-bit
+  L2 Cache Size:                                 524288 bytes
+  Max Texture Dimension Size (x,y,z)             1D=(65536), 2D=(65536,65536), 3D=(4096,4096,4096)
+  Max Layered Texture Size (dim) x layers        1D=(16384) x 2048, 2D=(16384,16384) x 2048
+  Total amount of constant memory:               65536 bytes
+  Total amount of shared memory per block:       49152 bytes
+  Total number of registers available per block: 65536
+  Warp size:                                     32
+  Maximum number of threads per multiprocessor:  2048
+  Maximum number of threads per block:           1024
+  Maximum sizes of each dimension of a block:    1024 x 1024 x 64
+  Maximum sizes of each dimension of a grid:     2147483647 x 65535 x 65535
+  Maximum memory pitch:                          2147483647 bytes
+  Texture alignment:                             512 bytes
+  Concurrent copy and kernel execution:          Yes with 1 copy engine(s)
+  Run time limit on kernels:                     Yes
+  Integrated GPU sharing Host Memory:            No
+  Support host page-locked memory mapping:       Yes
+  Alignment requirement for Surfaces:            Yes
+  Device has ECC support:                        Disabled
+  Device supports Unified Addressing (UVA):      Yes
+  Device PCI Bus ID / PCI location ID:           5 / 0
+  Compute Mode:
+     < Default (multiple host threads can use ::cudaSetDevice() with device simultaneously) >
+
+deviceQuery, CUDA Driver = CUDART, CUDA Driver Version = 7.5, CUDA Runtime Version = 5.0, NumDevs = 1, Device0 = GeForce GTX 680
+
+First total shared memory /block is 49152 bytes in GTX 680, our lab need 32 * 33 threads and each thread need 8448 bytes, so each block could have 49152 / 8448 = 5.8. So we can run 5 blocks at once.
+
+Second the total number of registers available per block is 65536, in out code each thread use 25 registers, so we can run 65536 / 25 = 2621 > 1024. So the register does not affect our code's performance.
+
+Third there are 8 multiprocessirs int GTX 680
+According to the above three information the number of threads that can be scheduled simutaneously is 5 * 32 * 33 * 8 = 42240
